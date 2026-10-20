@@ -9,3 +9,21 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(500), 500)
 	}
 }
+
+type post struct {
+	Title   string
+	Content string
+}
+
+var posts = []post{
+	{"Test Posts", "This is the first post !!"},
+}
+
+func (app *application) listPosts(w http.ResponseWriter, r *http.Request) {
+	err := app.html.render(w, 200, posts, "base", "pages/posts.tmpl")
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(500), 500)
+	}
+}
