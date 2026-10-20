@@ -1,6 +1,10 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/taro0079/go-htmx/assets"
+)
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	err := app.html.render(w, 200, nil, "base", "pages/home.tmpl")
@@ -15,9 +19,7 @@ type post struct {
 	Content string
 }
 
-var posts = []post{
-	{"Test Posts", "This is the first post !!"},
-}
+var posts, _ = assets.LoadAll()
 
 func (app *application) listPosts(w http.ResponseWriter, r *http.Request) {
 	err := app.html.render(w, 200, posts, "base", "pages/posts.tmpl")
