@@ -78,7 +78,11 @@ func LoadAll() ([]Post, error) {
 			return fmt.Errorf("%s: %w", filePath, err)
 		}
 
-		post.Content = string(content)
+		html, err := ToHtml(content)
+		if err != nil {
+			return fmt.Errorf("%s: %w", filePath, err)
+		}
+		post.Content = string(html)
 
 		posts = append(posts, post)
 
