@@ -34,6 +34,8 @@ func main() {
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileserver))
 	mux.HandleFunc("GET /{$}", app.home)
 	mux.HandleFunc("GET /posts", app.listPosts)
+	mux.HandleFunc("GET /posts/{post_id}", app.getPost)
+	mux.HandleFunc("GET /gopher", app.gopher)
 
 	logger.Info("starting server", "port", 5051)
 	err = http.ListenAndServe(":5051", mux)

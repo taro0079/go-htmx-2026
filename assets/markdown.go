@@ -3,6 +3,7 @@ package assets
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 	"io/fs"
 	"os"
 	"path"
@@ -42,7 +43,36 @@ func RenderFile(path string) (string, error) {
 
 type Post struct {
 	Title   string `yaml:"title"`
-	Content string
+	Content template.HTML
+}
+
+func GetPost(slug string) (Post, error) {
+	filePath := "posts/" + slug + ".md"
+	data, err := fs.ReadFile(Posts, filePath)
+
+	if err != nil {
+		return Post{}, fmt.Errorf("%s: %w", filePath, err)
+	}
+
+	var post Post
+
+	content, err := frontmatter.Parse(
+		strings.NewReader(string(data)),
+		&post,
+	)
+
+	if err != nil {
+		return Post{}, fmt.Errorf("%s: %w", filePath, err)
+	}
+
+	html, err := ToHtml(content)
+	if err != nil {
+		return Post{}, fmt.Errorf("%s: %w", filePath, err)
+	}
+
+	post.Content = template.HTML(string(html))
+
+	return post, nil
 }
 
 func LoadAll() ([]Post, error) {
@@ -82,7 +112,7 @@ func LoadAll() ([]Post, error) {
 		if err != nil {
 			return fmt.Errorf("%s: %w", filePath, err)
 		}
-		post.Content = string(html)
+		post.Content = template.HTML(string(html))
 
 		posts = append(posts, post)
 
