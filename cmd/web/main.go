@@ -36,13 +36,13 @@ func main() {
 	mux.HandleFunc("GET /posts", app.listPosts)
 	mux.HandleFunc("GET /posts/{post_id}", app.getPost)
 	mux.HandleFunc("GET /gopher", app.gopher)
+	handler := app.loggingMiddleware(mux)
 
 	logger.Info("starting server", "port", 5051)
-	err = http.ListenAndServe(":5051", mux)
+	err = http.ListenAndServe(":5051", handler)
 
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
-
 }
