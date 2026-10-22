@@ -34,6 +34,7 @@ func main() {
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileserver))
 	mux.HandleFunc("GET /{$}", app.home)
 	mux.HandleFunc("GET /posts", app.listPosts)
+	mux.HandleFunc("GET /posts/search", app.searchPost)
 	mux.HandleFunc("GET /posts/{post_id}", app.getPost)
 	mux.HandleFunc("GET /gopher", app.gopher)
 	handler := app.loggingMiddleware(mux)

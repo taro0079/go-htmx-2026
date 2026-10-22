@@ -46,6 +46,23 @@ type Post struct {
 	Content template.HTML
 }
 
+func SearchPost(query string) ([]Post, error) {
+	filtered := []Post{}
+	posts, _ := LoadAll()
+
+	if query == "" {
+		return posts, nil
+	}
+
+	for _, post := range posts {
+		if strings.Contains(post.Title, query) || strings.Contains(string(post.Content), query) {
+			filtered = append(filtered, post)
+		}
+	}
+
+	return posts, nil
+}
+
 func GetPost(slug string) (Post, error) {
 	filePath := "posts/" + slug + ".md"
 	data, err := fs.ReadFile(Posts, filePath)

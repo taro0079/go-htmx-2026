@@ -1,14 +1,24 @@
 {{define "page:title"}}Posts{{end}}
 
 {{define "page:content"}}
+<input type="search"
+       name="query"
+       hx-get="/posts/search"
+       hx-trigger="input changed delay:300ms, search"
+       hx-target="#search-results"
+       hx-indicator="#spinner"
+       placeholder="Search Posts">
+
+<span id="spinner" class="htmx-indicator">
+    検索中...
+</span>
 <table>
     <thead>
         <tr>
             <th>Title</th>
-            <th>Content</th>
         </tr>
     </thead>
-    <tbody>
+    <tbody id="search-results">
         {{template "posts:rows" .}}
     </tbody>
 </table>
@@ -18,7 +28,6 @@
     {{range .}}
     <tr>
         <td>{{ .Title }}</td>
-        <td>{{ .Content }}</td>
     </tr>
     {{end}}
 {{end}}
