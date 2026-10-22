@@ -87,3 +87,21 @@ func (app *application) searchPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+// func (app *application) login(w http.ResponseWriter, r *http.Request) {
+// 	if err := r.ParseForm(); err != nil {
+// 		http.Error(w, "Invalid form", http.StatusBadRequest)
+// 		return
+// 	}
+//
+// 	email := r.PostForm.Get("email")
+// 	password := r.PostForm.Get("password")
+//
+// 	var userID int64
+// 	var passwordHash string
+//
+// 	err:=app.db.QueryRowContext(
+// 		r.Context(),
+//
+// 		)
+// }

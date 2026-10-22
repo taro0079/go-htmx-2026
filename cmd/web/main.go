@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 type application struct {
 	logger *slog.Logger
 	html   *htmlRenderer
+	db *sql.DB
 }
 
 func main() {
