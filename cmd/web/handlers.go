@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/taro0079/go-htmx/assets"
+	"github.com/taro0079/go-htmx/cmd/internal/models"
+	"github.com/taro0079/go-htmx/cmd/users"
 )
 
 func (app *application) loggingMiddleware(next http.Handler) http.Handler {
@@ -24,6 +26,42 @@ func (app *application) loggingMiddleware(next http.Handler) http.Handler {
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	err := app.html.render(w, http.StatusOK, nil, "base", "pages/home.tmpl")
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func (app *application) getSignUp(w http.ResponseWriter, r *http.Request) {
+	err := app.html.render(w, http.StatusOK, nil, "base", "pages/sign_up/new.tmpl")
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func (app *application) postSignUp(w http.ResponseWriter, r *http.Request) {
+	hased_password, err := users.HashPassword(r.FormValue("password"))
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w,http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	user := &models.User{
+		Email: r.FormValue("email"),
+		PasswordHash: hased_password,
+	}
+
+	user, err = app.users.Create(r.Context(), user)
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w,http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	err = app.html.render(w, http.StatusOK, nil, "base", "pages/sign_up/create.tmpl")
+
 	if err != nil {
 		app.logger.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
