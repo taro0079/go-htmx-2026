@@ -45,11 +45,11 @@ func (app *application) postSignUp(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		app.logger.Error(err.Error())
-		http.Error(w,http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
 	user := &models.User{
-		Email: r.FormValue("email"),
+		Email:        r.FormValue("email"),
 		PasswordHash: hased_password,
 	}
 
@@ -57,7 +57,7 @@ func (app *application) postSignUp(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		app.logger.Error(err.Error())
-		http.Error(w,http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
 	err = app.html.render(w, http.StatusOK, nil, "base", "pages/sign_up/create.tmpl")
@@ -124,6 +124,102 @@ func (app *application) searchPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
+}
+
+func (app *application) listUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := app.users.FindAll(r.Context())
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	err = app.html.render(w, http.StatusOK, users, "base", "pages/users/index.tmpl")
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+func (app *application) getLogin(w http.ResponseWriter, r *http.Request) {
+	err := app.html.render(w, http.StatusOK, nil, "base", "pages/login/index.tmpl")
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func (app *application) login(w http.ResponseWriter, r *http.Request) {
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+	user, err := app.users.FindByEmail(r.Context(), email)
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, "メールアドレスが間違っています", http.StatusUnauthorized)
+		return
+	}
+
+	err = users.CheckPassword(password, user.PasswordHash)
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, "パスワードが間違っています", http.StatusUnauthorized)
+		return
+	}
+
+	if err := app.createSession(w, r, user.ID); err != nil {
+		app.logger.Error(err.Error())
+
+		http.Error(
+			w,
+			http.StatusText(http.StatusInternalServerError),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	http.Redirect(
+		w,
+		r,
+		"/users",
+		http.StatusSeeOther,
+	)
+
+}
+
+func (app *application) createSession(w http.ResponseWriter, r *http.Request, userId int64) error {
+	token, tokenHash, err := GenerateSessionToken()
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return err
+	}
+
+	expiresAt := time.Now().Add(24 * time.Hour)
+	err = app.session.Create(
+		r.Context(),
+		tokenHash,
+		userId,
+		expiresAt,
+	)
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return err
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session",
+		Value:    token,
+		Path:     "/",
+		Expires:  expiresAt,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	return nil
 }
 
 // func (app *application) login(w http.ResponseWriter, r *http.Request) {

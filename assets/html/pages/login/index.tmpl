@@ -1,0 +1,22 @@
+{{define "page:title"}}Login{{end}}
+
+{{define "page:content"}}
+<h1>Login</h1>
+<form action="/login" method="post">
+    <div name="email">
+        <label for="email">Email</label>
+        <input name="email">
+    </div>
+
+    <div name="password">
+        <label for="password">Password</label>
+        <input name="password">
+    </div>
+
+    <button type="submit">Login</button>
+</form>
+
+{{end}}
+
+
+

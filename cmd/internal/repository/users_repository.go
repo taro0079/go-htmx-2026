@@ -44,3 +44,66 @@ func (r *UserRepository) Create(
 
 	return user, nil
 }
+
+func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
+	query := `SELECT * FROM users WHERE email = ?`
+
+	user := &models.User{}
+	err := r.db.QueryRowContext(
+		ctx,
+		query,
+		email,
+	).Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+
+}
+
+func (r *UserRepository) FindAll(
+	ctx context.Context,
+) ([]models.User, error) {
+	query := `SELECT * FROM users`
+
+	rows, err := r.db.QueryContext(
+		ctx,
+		query,
+	)
+	users := make([]models.User, 0)
+
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var user models.User
+
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.PasswordHash,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
