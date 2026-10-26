@@ -85,6 +85,7 @@ func main() {
 	mux.HandleFunc("GET /users", app.requireAuth(app.listUsers))
 	mux.HandleFunc("GET /login", app.getLogin)
 	mux.HandleFunc("POST /login", app.login)
+	mux.HandleFunc("POST /logout", app.requireAuth(app.logout))
 	mux.HandleFunc("GET /sign_up", app.getSignUp)
 	mux.HandleFunc("POST /sign_up", app.postSignUp)
 	handler := app.loggingMiddleware(mux)

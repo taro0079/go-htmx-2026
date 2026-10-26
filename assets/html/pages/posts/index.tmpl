@@ -4,6 +4,10 @@
 {{if .IsAuthenticated}}
 <div>
 <a href="/posts/new">New Post</a>
+<form action="/logout" method="post">
+    <button type="submit">Logout</button>
+</form>
+
 </div>
 {{end}}
 

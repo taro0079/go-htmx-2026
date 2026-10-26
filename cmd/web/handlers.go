@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"time"
 
@@ -276,20 +278,33 @@ func (app *application) createSession(w http.ResponseWriter, r *http.Request, us
 	return nil
 }
 
-// func (app *application) login(w http.ResponseWriter, r *http.Request) {
-// 	if err := r.ParseForm(); err != nil {
-// 		http.Error(w, "Invalid form", http.StatusBadRequest)
-// 		return
-// 	}
-//
-// 	email := r.PostForm.Get("email")
-// 	password := r.PostForm.Get("password")
-//
-// 	var userID int64
-// 	var passwordHash string
-//
-// 	err:=app.db.QueryRowContext(
-// 		r.Context(),
-//
-// 		)
-// }
+func (app *application) logout(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session")
+	if err != nil && err != http.ErrNoCookie {
+		http.Error(w, "Invalid cookie", http.StatusBadRequest)
+		return
+	}
+
+	if err == nil {
+		hash := sha256.Sum256([]byte(cookie.Value))
+		tokenHash := hex.EncodeToString(hash[:])
+
+		if err := app.session.Delete(r.Context(), tokenHash); err != nil {
+			app.logger.Error(err.Error())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	http.Redirect(w, r, "/posts", http.StatusSeeOther)
+
+}
