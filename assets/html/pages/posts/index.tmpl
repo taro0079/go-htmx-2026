@@ -1,9 +1,11 @@
 {{define "page:title"}}Posts{{end}}
 
 {{define "page:content"}}
+{{if .IsAuthenticated}}
 <div>
 <a href="/posts/new">New Post</a>
 </div>
+{{end}}
 
 <input type="search"
        name="query"
@@ -25,7 +27,7 @@
         </tr>
     </thead>
     <tbody id="search-results">
-        {{template "posts:rows" .}}
+        {{template "posts:rows" .Posts}}
     </tbody>
 </table>
 {{end}}

@@ -108,14 +108,28 @@ func (app *application) createPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) listPosts(w http.ResponseWriter, r *http.Request) {
+	isAuthenticated, err := app.isAuthenticated(r)
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
 	posts, err := app.posts.FindAll(r.Context())
 	if err != nil {
 		app.logger.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
-	err = app.html.render(w, http.StatusOK, posts, "base", "pages/posts/index.tmpl")
-
+	data := struct {
+		Posts           []models.Post
+		IsAuthenticated bool
+	}{
+		Posts:           posts,
+		IsAuthenticated: isAuthenticated,
+	}
+	err = app.html.render(w, http.StatusOK, data, "base", "pages/posts/index.tmpl")
 	if err != nil {
 		app.logger.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

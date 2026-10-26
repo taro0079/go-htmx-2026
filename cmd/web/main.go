@@ -1,10 +1,7 @@
 package main
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
-	"errors"
 	"log"
 	"log/slog"
 	"net/http"
@@ -30,44 +27,16 @@ func (app *application) requireAuth(
 		w http.ResponseWriter,
 		r *http.Request,
 	) {
-		cookie, err := r.Cookie("session")
+		authenticated, err := app.isAuthenticated(r)
 		if err != nil {
-			http.Redirect(
-				w,
-				r,
-				"/login",
-				http.StatusSeeOther,
-			)
+			app.logger.Error(err.Error())
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		hash := sha256.Sum256([]byte(cookie.Value))
-		tokenHash := hex.EncodeToString(hash[:])
-		userId, err := app.session.FindUserID(
-			r.Context(),
-			tokenHash,
-		)
-
-		if err != nil {
-			if !errors.Is(err, sql.ErrNoRows) {
-				app.logger.Error(err.Error())
-				http.Error(
-					w,
-					"Internal Server Error",
-					http.StatusInternalServerError,
-				)
-				return
-			}
-
-			http.Redirect(
-				w,
-				r,
-				"/login",
-				http.StatusSeeOther,
-			)
+		if !authenticated {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-
-		_ = userId
 
 		next(w, r)
 	}
@@ -108,9 +77,9 @@ func main() {
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileserver))
 	mux.HandleFunc("GET /{$}", app.home)
 	mux.HandleFunc("GET /posts", app.listPosts)
-	mux.HandleFunc("GET /posts/new", app.newPost)
+	mux.HandleFunc("GET /posts/new", app.requireAuth(app.newPost))
 	mux.HandleFunc("GET /posts/search", app.searchPost)
-	mux.HandleFunc("POST /posts", app.createPosts)
+	mux.HandleFunc("POST /posts", app.requireAuth(app.createPosts))
 	mux.HandleFunc("GET /posts/{post_id}", app.getPost)
 	mux.HandleFunc("GET /gopher", app.gopher)
 	mux.HandleFunc("GET /users", app.requireAuth(app.listUsers))
