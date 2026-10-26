@@ -1,0 +1,41 @@
+{{define "page:title"}}Posts{{end}}
+
+{{define "page:content"}}
+<div>
+<a href="/posts/new">New Post</a>
+</div>
+
+<input type="search"
+       name="query"
+       hx-get="/posts/search"
+       hx-trigger="input changed delay:300ms, search"
+       hx-target="#search-results"
+       hx-indicator="#spinner"
+       placeholder="Search Posts">
+
+<span id="spinner" class="htmx-indicator">
+    検索中...
+</span>
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Created At</th>
+
+        </tr>
+    </thead>
+    <tbody id="search-results">
+        {{template "posts:rows" .}}
+    </tbody>
+</table>
+{{end}}
+
+{{define "posts:rows"}}
+    {{range .}}
+    <tr>
+        <td>{{ .Title }}</td>
+        <td>{{ .CreatedAt }}</td>
+    </tr>
+    {{end}}
+{{end}}
+

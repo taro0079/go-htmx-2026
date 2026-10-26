@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/taro0079/go-htmx/assets"
@@ -77,9 +76,45 @@ func (app *application) gopher(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *application) newPost(w http.ResponseWriter, r *http.Request) {
+	err := app.html.render(w, http.StatusOK, nil, "base", "pages/posts/new.tmpl")
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func (app *application) createPosts(w http.ResponseWriter, r *http.Request) {
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+	post := &models.Post{
+		Title:   title,
+		Content: content,
+	}
+	post, err := app.posts.Create(r.Context(), post)
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	err = app.html.render(w, http.StatusOK, post, "base", "pages/posts/create.tmpl")
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
 func (app *application) listPosts(w http.ResponseWriter, r *http.Request) {
-	var posts, _ = assets.LoadAll()
-	err := app.html.render(w, http.StatusOK, posts, "base", "pages/posts.tmpl")
+	posts, err := app.posts.FindAll(r.Context())
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	err = app.html.render(w, http.StatusOK, posts, "base", "pages/posts/index.tmpl")
 
 	if err != nil {
 		app.logger.Error(err.Error())
@@ -94,7 +129,7 @@ func (app *application) getPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
-	err = app.html.render(w, http.StatusOK, post, "base", "pages/post.tmpl")
+	err = app.html.render(w, http.StatusOK, post, "base", "pages/posts/show.tmpl")
 
 	if err != nil {
 		app.logger.Error(err.Error())
@@ -103,27 +138,32 @@ func (app *application) getPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) searchPost(w http.ResponseWriter, r *http.Request) {
-	query := r.FormValue("query")
-	var posts, _ = assets.LoadAll()
+	query := r.URL.Query().Get("query")
+	app.logger.Info(query)
 
-	var matches []assets.Post
+	var posts []models.Post
+	var err error
 
 	if query == "" {
-		matches = posts
+		posts, err = app.posts.FindAll(r.Context())
+
+		if err != nil {
+			app.logger.Error(err.Error())
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	} else {
-		for _, p := range posts {
-			if strings.Contains(p.Title, query) || strings.Contains(string(p.Content), query) {
-				matches = append(matches, p)
-			}
+		posts, err = app.posts.Search(r.Context(), query)
+		if err != nil {
+			app.logger.Error(err.Error())
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}
 
-	err := app.html.render(w, http.StatusOK, matches, "posts:rows", "pages/posts.tmpl")
+	err = app.html.render(w, http.StatusOK, posts, "posts:rows", "pages/posts/index.tmpl")
 	if err != nil {
 		app.logger.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-
 }
 
 func (app *application) listUsers(w http.ResponseWriter, r *http.Request) {

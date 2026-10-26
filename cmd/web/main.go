@@ -20,6 +20,7 @@ type application struct {
 	html    *htmlRenderer
 	users   *repository.UserRepository
 	session *repository.SessionRepository
+	posts   *repository.PostRepository
 }
 
 func (app *application) requireAuth(
@@ -98,6 +99,7 @@ func main() {
 		html:    htmlRenderer,
 		users:   repository.NewUserRepository(db),
 		session: repository.NewSessionRepository(db),
+		posts:   repository.NewPostRepository(db),
 	}
 
 	fileserver := http.FileServerFS(assets.StaticFiles)
@@ -106,7 +108,9 @@ func main() {
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileserver))
 	mux.HandleFunc("GET /{$}", app.home)
 	mux.HandleFunc("GET /posts", app.listPosts)
+	mux.HandleFunc("GET /posts/new", app.newPost)
 	mux.HandleFunc("GET /posts/search", app.searchPost)
+	mux.HandleFunc("POST /posts", app.createPosts)
 	mux.HandleFunc("GET /posts/{post_id}", app.getPost)
 	mux.HandleFunc("GET /gopher", app.gopher)
 	mux.HandleFunc("GET /users", app.requireAuth(app.listUsers))
