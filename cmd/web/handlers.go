@@ -140,27 +140,52 @@ func (app *application) listPosts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *application) loadPost(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("post_id"), 10, 64)
+
+	if err != nil || id <= 0 {
+		http.NotFound(w, r)
+		return
+	}
+	post := &models.Post{
+		ID: id,
+	}
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	err = app.html.render(w, http.StatusOK, post, "base", "pages/posts/show.tmpl")
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
 func (app *application) getPost(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("post_id"), 10, 64)
 
 	if err != nil || id <= 0 {
-		http.NotFound(w,r)
+		http.NotFound(w, r)
 		return
 	}
 
 	post, err := app.posts.FindById(r.Context(), id)
 	if errors.Is(err, sql.ErrNoRows) {
-		http.NotFound(w,r)
+		http.NotFound(w, r)
 		return
 	}
 
 	if err != nil {
 		app.logger.Error(err.Error())
-		http.Error(w,"Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	err = app.html.render(w, http.StatusOK, post, "base", "pages/posts/show.tmpl")
+	err = app.html.render(w, http.StatusOK, post, "page:content", "pages/posts/content.tmpl")
 
 	if err != nil {
 		app.logger.Error(err.Error())

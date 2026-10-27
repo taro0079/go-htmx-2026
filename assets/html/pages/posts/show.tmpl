@@ -1,15 +1,15 @@
 {{define "page:title"}}Posts{{end}}
 
 {{define "page:content"}}
-<div>
-<div>Title</div>
-<div>{{ .Title }}</div>
-</div>
-
-<div>
-<div>Content</div>
-<div>{{ .Content }}</div>
-</div>
+<article>
+    <div
+        id="post-content"
+        hx-get="/posts/{{ .ID}}/content"
+        hx-trigger="load"
+        hx-swap="innerHTML"
+        class="post-container"
+    >
+        <p>Loading...</p>
+    </div>
+</article>
 {{end}}
-
-
