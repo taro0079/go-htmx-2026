@@ -88,6 +88,32 @@ func (r *PostRepository) Search(ctx context.Context, q string) ([]models.Post, e
 	return posts, nil
 }
 
+func (r *PostRepository) FindById(
+	ctx context.Context,
+	postId int64,
+) (*models.Post, error) {
+	query := `SELECT * FROM posts WHERE id = ?`
+	post := &models.Post{}
+	err := r.db.QueryRowContext(
+		ctx,
+		query,
+		postId,
+	).Scan(
+		&post.ID,
+		&post.Title,
+		&post.Content,
+		&post.Published,
+		&post.CreatedAt,
+		&post.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
 func (r *PostRepository) FindAll(
 	ctx context.Context,
 ) ([]models.Post, error) {

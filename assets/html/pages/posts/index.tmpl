@@ -39,7 +39,7 @@
 {{define "posts:rows"}}
     {{range .}}
     <tr>
-        <td>{{ .Title }}</td>
+        <td><a href="/posts/{{ .ID }}">{{ .Title }}</a></td>
         <td>{{ .CreatedAt }}</td>
     </tr>
     {{end}}

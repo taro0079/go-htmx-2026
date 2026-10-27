@@ -2,11 +2,13 @@ package main
 
 import (
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
+	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
-	"github.com/taro0079/go-htmx/assets"
 	"github.com/taro0079/go-htmx/cmd/internal/models"
 	"github.com/taro0079/go-htmx/cmd/users"
 )
@@ -139,10 +141,23 @@ func (app *application) listPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) getPost(w http.ResponseWriter, r *http.Request) {
-	var post, err = assets.GetPost(r.PathValue("post_id"))
+	id, err := strconv.ParseInt(r.PathValue("post_id"), 10, 64)
+
+	if err != nil || id <= 0 {
+		http.NotFound(w,r)
+		return
+	}
+
+	post, err := app.posts.FindById(r.Context(), id)
+	if errors.Is(err, sql.ErrNoRows) {
+		http.NotFound(w,r)
+		return
+	}
+
 	if err != nil {
 		app.logger.Error(err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w,"Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	err = app.html.render(w, http.StatusOK, post, "base", "pages/posts/show.tmpl")
